@@ -30,9 +30,23 @@ const VerifyEmailPage: React.FC = () => {
 
       try {
         // Call verification endpoint directly (works without authentication)
-        const response = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:5000'}/api/auth/verify-email/${token}`, {
+        const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:5000';
+        const verifyUrl = `${apiUrl}/api/auth/verify-email/${token}`;
+        
+        const response = await fetch(verifyUrl, {
           method: 'GET',
         });
+        
+        // Check content type before parsing
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('Non-JSON response:', text);
+          setMessage(`❌ Verification failed: Server returned an invalid response. Please check if the backend API is running at ${apiUrl}`);
+          setIsSuccess(false);
+          setVerifying(false);
+          return;
+        }
         
         if (!response.ok) {
           const errorData = await response.json();
