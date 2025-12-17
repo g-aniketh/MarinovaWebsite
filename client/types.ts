@@ -1,3 +1,23 @@
+// Subscription Types
+export type SubscriptionPlan = 'free' | 'retail_india' | 'international' | 'enterprise';
+
+export interface MonthlyCredits {
+  weatherBrief: number;
+  researchLab: number;
+  chat: number;
+  insights: number;
+}
+
+export interface User {
+  _id: string;
+  name?: string;
+  email: string;
+  isEmailVerified: boolean;
+  subscriptionStatus: SubscriptionPlan;
+  usageCredits: number;  // Free tier only
+  monthlyCredits: MonthlyCredits;
+  creditResetDate?: string;
+}
 
 export interface WeatherDataPoint {
   time: string;

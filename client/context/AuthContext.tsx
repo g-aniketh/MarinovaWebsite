@@ -8,6 +8,13 @@ interface User {
   isEmailVerified: boolean;
   subscriptionStatus: SubscriptionPlan;
   usageCredits: number;
+  monthlyCredits: {
+    weatherBrief: number;
+    researchLab: number;
+    chat: number;
+    insights: number;
+  };
+  creditResetDate?: string;
   usageHistory?: Array<{ feature: string; usedAt: Date }>;
 }
 
@@ -56,7 +63,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             ...response.user,
             isEmailVerified: response.user.isEmailVerified ?? false,
             subscriptionStatus: response.user.subscriptionStatus ?? 'free',
-            usageCredits: response.user.usageCredits ?? 3
+            usageCredits: response.user.usageCredits ?? 5,
+            monthlyCredits: response.user.monthlyCredits ?? {
+              weatherBrief: 0,
+              researchLab: 0,
+              chat: 0,
+              insights: 0
+            }
           });
         } else {
           authService.removeToken();
@@ -79,7 +92,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         ...response.user,
         isEmailVerified: response.user.isEmailVerified ?? false,
         subscriptionStatus: response.user.subscriptionStatus ?? 'free',
-        usageCredits: response.user.usageCredits ?? 3
+        usageCredits: response.user.usageCredits ?? 5,
+        monthlyCredits: response.user.monthlyCredits ?? {
+          weatherBrief: 0,
+          researchLab: 0,
+          chat: 0,
+          insights: 0
+        }
       });
     }
     return response;
@@ -92,7 +111,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         ...response.user,
         isEmailVerified: response.user.isEmailVerified ?? false,
         subscriptionStatus: response.user.subscriptionStatus ?? 'free',
-        usageCredits: response.user.usageCredits ?? 3
+        usageCredits: response.user.usageCredits ?? 5,
+        monthlyCredits: response.user.monthlyCredits ?? {
+          weatherBrief: 0,
+          researchLab: 0,
+          chat: 0,
+          insights: 0
+        }
       });
     }
     return response;
@@ -111,7 +136,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           ...response.user,
           isEmailVerified: response.user.isEmailVerified ?? false,
           subscriptionStatus: response.user.subscriptionStatus ?? 'free',
-          usageCredits: response.user.usageCredits ?? 3
+          usageCredits: response.user.usageCredits ?? 5,
+          monthlyCredits: response.user.monthlyCredits ?? {
+            weatherBrief: 0,
+            researchLab: 0,
+            chat: 0,
+            insights: 0
+          }
         });
       }
       return { success: response.success, message: response.message };

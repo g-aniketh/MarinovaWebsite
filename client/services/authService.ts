@@ -15,9 +15,22 @@ export interface AuthResponse {
     isEmailVerified?: boolean;
     subscriptionStatus?: SubscriptionPlan;
     usageCredits?: number;
+    monthlyCredits?: {
+      weatherBrief: number;
+      researchLab: number;
+      chat: number;
+      insights: number;
+    };
+    creditResetDate?: string;
     usageHistory?: Array<{ feature: string; usedAt: Date }>;
   };
   usageCredits?: number;
+  monthlyCredits?: {
+    weatherBrief: number;
+    researchLab: number;
+    chat: number;
+    insights: number;
+  };
   requiresVerification?: boolean;
   requiresSubscription?: boolean;
 }

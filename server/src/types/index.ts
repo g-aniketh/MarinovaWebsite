@@ -18,7 +18,14 @@ export interface IUser extends Document {
   isEmailVerified: boolean;
   verificationToken: string | null;
   subscriptionStatus: SubscriptionPlan;
-  usageCredits: number;
+  usageCredits: number;  // Free tier only
+  monthlyCredits: {
+    weatherBrief: number;
+    researchLab: number;
+    chat: number;
+    insights: number;
+  };
+  creditResetDate: Date;
   usageHistory: UsageHistoryEntry[];
   createdAt: Date;
   updatedAt: Date;
@@ -96,6 +103,31 @@ export interface EmailServiceResponse {
   messageId?: string;
   error?: string;
 }
+
+// Subscription and Credit System Types
+export interface FeatureLimits {
+  weatherBrief: number;     // -1 = unlimited
+  researchLab: number;      // -1 = unlimited
+  chat: number;             // -1 = unlimited
+  insights: number;         // -1 = unlimited
+}
+
+export interface MonthlyCredits {
+  weatherBrief: number;
+  researchLab: number;
+  chat: number;
+  insights: number;
+}
+
+export interface SubscriptionPlanConfig {
+  name: SubscriptionPlan;
+  displayName: string;
+  price: number;
+  currency: string;
+  limits: FeatureLimits;
+}
+
+export type FeatureName = 'weatherBrief' | 'researchLab' | 'chat' | 'insights';
 
 // Weather types (for AI service)
 export interface WeatherResponse {

@@ -51,12 +51,26 @@ const Layout: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Helper to check if feature is locked based on credits
+  const isFeatureLocked = (feature: 'weatherBrief' | 'researchLab' | 'chat' | 'insights'): boolean => {
+    if (!isAuthenticated || !user) return true;
+    
+    // Free tier: check universal credits
+    if (user.subscriptionStatus === 'free') {
+      return user.usageCredits <= 0;
+    }
+    
+    // Paid tier: check feature-specific credits (-1 means unlimited)
+    const featureCredit = user.monthlyCredits[feature];
+    return featureCredit !== -1 && featureCredit <= 0;
+  };
+
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard, locked: false },
-    { path: '/forecast', label: 'Forecast', icon: Globe2, locked: !isAuthenticated },
-    { path: '/insights', label: 'Insights', icon: Sparkles, locked: !isAuthenticated || (user && user.subscriptionStatus === 'free') },
-    { path: '/research', label: 'Research Lab', icon: FlaskConical, locked: !isAuthenticated || (user && user.subscriptionStatus === 'free') },
-    { path: '/chat', label: 'Captain on Deck', icon: MessageSquare, locked: !isAuthenticated || (user && user.subscriptionStatus === 'free') },
+    { path: '/forecast', label: 'Forecast', icon: Globe2, locked: !isAuthenticated || !user?.isEmailVerified },
+    { path: '/insights', label: 'Insights', icon: Sparkles, locked: isFeatureLocked('insights') },
+    { path: '/research', label: 'Research Lab', icon: FlaskConical, locked: isFeatureLocked('researchLab') },
+    { path: '/chat', label: 'Captain on Deck', icon: MessageSquare, locked: isFeatureLocked('chat') },
   ];
 
   return (

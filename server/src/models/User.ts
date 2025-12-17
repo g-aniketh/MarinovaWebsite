@@ -43,7 +43,29 @@ const userSchema = new Schema<IUser>(
     },
     usageCredits: {
       type: Number,
-      default: 3
+      default: 5  // Free tier universal credits
+    },
+    monthlyCredits: {
+      weatherBrief: {
+        type: Number,
+        default: 0
+      },
+      researchLab: {
+        type: Number,
+        default: 0
+      },
+      chat: {
+        type: Number,
+        default: 0
+      },
+      insights: {
+        type: Number,
+        default: 0
+      }
+    },
+    creditResetDate: {
+      type: Date,
+      default: Date.now
     },
     usageHistory: [
       {
