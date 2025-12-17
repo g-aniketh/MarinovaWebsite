@@ -9,19 +9,12 @@ const CreditCounter: React.FC = () => {
     return null;
   }
 
-  const isPaid = user.subscriptionStatus !== 'free';
-  const credits = user.usageCredits;
+  const isFree = user.subscriptionStatus === 'free';
+  const credits = user.usageCredits || 0;
 
   return (
     <div className="flex items-center gap-2">
-      {isPaid ? (
-        // Paid subscription badge
-        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border-2 border-amber-400 shadow-lg shadow-amber-500/20">
-          <Crown className="w-4 h-4 text-white" />
-          <span className="text-white font-bold text-sm">PREMIUM</span>
-          <Infinity className="w-4 h-4 text-white" />
-        </div>
-      ) : (
+      {isFree ? (
         // Free tier credit counter
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 shadow-lg ${
           credits > 1 
@@ -39,6 +32,15 @@ const CreditCounter: React.FC = () => {
               <span className="text-white/80 text-xs">Verify email to unlock</span>
             )}
           </div>
+        </div>
+      ) : (
+        // Paid subscription badge
+        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border-2 border-amber-400 shadow-lg shadow-amber-500/20">
+          <Crown className="w-4 h-4 text-white" />
+          <span className="text-white font-bold text-sm uppercase">
+            {user.subscriptionStatus.replace('_', ' ')}
+          </span>
+          <Infinity className="w-4 h-4 text-white" />
         </div>
       )}
     </div>

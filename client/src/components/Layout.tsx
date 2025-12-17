@@ -55,6 +55,9 @@ const Layout: React.FC = () => {
   const isFeatureLocked = (feature: 'weatherBrief' | 'researchLab' | 'chat' | 'insights'): boolean => {
     if (!isAuthenticated || !user) return true;
     
+    // Check if email is verified first
+    if (!user.isEmailVerified) return true;
+    
     // Free tier: check universal credits
     if (user.subscriptionStatus === 'free') {
       return user.usageCredits <= 0;

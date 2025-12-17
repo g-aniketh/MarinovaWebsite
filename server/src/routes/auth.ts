@@ -79,7 +79,9 @@ router.post('/register', async (req: Request<object, object, RegisterRequestBody
         email: user.email,
         isEmailVerified: user.isEmailVerified,
         subscriptionStatus: user.subscriptionStatus,
-        usageCredits: user.usageCredits
+        usageCredits: user.usageCredits,
+        monthlyCredits: user.monthlyCredits,
+        creditResetDate: user.creditResetDate.toISOString()
       }
     });
   } catch (error) {
@@ -155,7 +157,9 @@ router.post('/login', async (req: Request<object, object, LoginRequestBody>, res
         email: user.email,
         isEmailVerified: user.isEmailVerified,
         subscriptionStatus: user.subscriptionStatus,
-        usageCredits: user.usageCredits
+        usageCredits: user.usageCredits,
+        monthlyCredits: user.monthlyCredits,
+        creditResetDate: user.creditResetDate.toISOString()
       }
     });
   } catch (error) {
@@ -191,6 +195,8 @@ router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<v
         isEmailVerified: user.isEmailVerified,
         subscriptionStatus: user.subscriptionStatus,
         usageCredits: user.usageCredits,
+        monthlyCredits: user.monthlyCredits,
+        creditResetDate: user.creditResetDate.toISOString(),
         usageHistory: user.usageHistory
       }
     });
@@ -199,6 +205,60 @@ router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<v
     res.status(500).json({
       success: false,
       message: 'Server error'
+    });
+  }
+});
+
+// @route   GET /api/auth/verify-email/:token
+// @desc    Verify user email via GET link
+// @access  Public
+router.get('/verify-email/:token', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      res.status(400).json({
+        success: false,
+        message: 'Verification token is required'
+      });
+      return;
+    }
+
+    // Find user with this verification token
+    const user = await User.findOne({ verificationToken: token });
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+      return;
+    }
+
+    // Mark email as verified and reset verification token
+    user.isEmailVerified = true;
+    user.verificationToken = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully! You now have 5 free credits.',
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        isEmailVerified: user.isEmailVerified,
+        subscriptionStatus: user.subscriptionStatus,
+        usageCredits: user.usageCredits,
+        monthlyCredits: user.monthlyCredits,
+        creditResetDate: user.creditResetDate.toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Verify email error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during verification'
     });
   }
 });
@@ -236,14 +296,16 @@ router.post('/verify-email', async (req: Request<object, object, VerifyEmailRequ
 
     res.json({
       success: true,
-      message: 'Email verified successfully! You now have 3 free credits.',
+      message: 'Email verified successfully! You now have 5 free credits.',
       user: {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
         isEmailVerified: user.isEmailVerified,
         subscriptionStatus: user.subscriptionStatus,
-        usageCredits: user.usageCredits
+        usageCredits: user.usageCredits,
+        monthlyCredits: user.monthlyCredits,
+        creditResetDate: user.creditResetDate.toISOString()
       }
     });
   } catch (error) {

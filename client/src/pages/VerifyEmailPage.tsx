@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 
 const VerifyEmailPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, verifyEmail } = useAuth();
+  const { checkAuth } = useAuth();
   const [verifying, setVerifying] = useState(true);
   const [message, setMessage] = useState<string>('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const hasVerified = useRef(false); // Prevent multiple verification attempts
 
   useEffect(() => {
     const handleVerification = async () => {
@@ -19,27 +21,55 @@ const VerifyEmailPage: React.FC = () => {
         return;
       }
 
-      if (!isAuthenticated) {
-        setMessage('⚠️ Please sign in first, then click the verification link again.');
-        setIsSuccess(false);
-        setVerifying(false);
-        setTimeout(() => navigate('/?login=true'), 3000);
+      // Prevent running verification multiple times (React StrictMode double-renders)
+      if (hasVerified.current) {
+        console.log('Verification already attempted, skipping...');
         return;
       }
+      
+      hasVerified.current = true;
 
       try {
-        const result = await verifyEmail(token);
+        // Call verification endpoint directly (works without authentication)
+        const response = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:5000'}/api/auth/verify-email/${token}`, {
+          method: 'GET',
+        });
+
+        console.log('Verification response status:', response.status);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.log('Verification error data:', errorData);
+          setMessage('❌ Verification failed: ' + (errorData.message || 'Unknown error'));
+          setIsSuccess(false);
+          setVerifying(false);
+          return;
+        }
+
+        const result = await response.json();
+        console.log('Verification result:', result);
         
         if (result.success) {
-          setMessage('✅ Email verified successfully! You now have 3 free credits.');
+          setMessage('✅ Email verified successfully! You now have 5 free credits. Please login to continue.');
           setIsSuccess(true);
+          
+          // If user is already logged in, refresh their auth state
+          const hasToken = authService.getToken();
+          console.log('Has auth token:', hasToken);
+          
+          if (hasToken) {
+            console.log('Refreshing auth state...');
+            await checkAuth();
+          }
+          
           setTimeout(() => navigate('/'), 3000);
         } else {
-          setMessage('❌ Verification failed: ' + result.message);
+          setMessage('❌ Verification failed: ' + (result.message || 'Unknown error'));
           setIsSuccess(false);
         }
       } catch (error) {
-        setMessage('❌ An error occurred during verification');
+        console.error('Verification network error:', error);
+        setMessage('❌ An error occurred during verification. Please check your connection and try again.');
         setIsSuccess(false);
       } finally {
         setVerifying(false);
@@ -47,7 +77,7 @@ const VerifyEmailPage: React.FC = () => {
     };
 
     handleVerification();
-  }, [token, isAuthenticated, verifyEmail, navigate]);
+  }, [token, navigate, checkAuth]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#0f172a] via-[#172554]/20 to-[#0f172a]">
