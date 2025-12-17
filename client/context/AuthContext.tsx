@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService, AuthResponse } from '../services/authService';
+import { authService, AuthResponse, SubscriptionPlan } from '../services/authService';
 
 interface User {
   id: string;
   email: string;
   fullName: string;
   isEmailVerified: boolean;
-  subscriptionStatus: 'free' | 'retail_india' | 'international' | 'enterprise';
+  subscriptionStatus: SubscriptionPlan;
   usageCredits: number;
   usageHistory?: Array<{ feature: string; usedAt: Date }>;
 }
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser({
             ...response.user,
             isEmailVerified: response.user.isEmailVerified ?? false,
-            subscriptionStatus: response.user.subscriptionStatus as any ?? 'free',
+            subscriptionStatus: response.user.subscriptionStatus ?? 'free',
             usageCredits: response.user.usageCredits ?? 3
           });
         } else {
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser({
         ...response.user,
         isEmailVerified: response.user.isEmailVerified ?? false,
-        subscriptionStatus: response.user.subscriptionStatus as any ?? 'free',
+        subscriptionStatus: response.user.subscriptionStatus ?? 'free',
         usageCredits: response.user.usageCredits ?? 3
       });
     }
@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser({
         ...response.user,
         isEmailVerified: response.user.isEmailVerified ?? false,
-        subscriptionStatus: response.user.subscriptionStatus as any ?? 'free',
+        subscriptionStatus: response.user.subscriptionStatus ?? 'free',
         usageCredits: response.user.usageCredits ?? 3
       });
     }
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser({
           ...response.user,
           isEmailVerified: response.user.isEmailVerified ?? false,
-          subscriptionStatus: response.user.subscriptionStatus as any ?? 'free',
+          subscriptionStatus: response.user.subscriptionStatus ?? 'free',
           usageCredits: response.user.usageCredits ?? 3
         });
       }

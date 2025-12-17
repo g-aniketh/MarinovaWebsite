@@ -1,5 +1,8 @@
 const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:5000';
 
+// Match backend subscription plan types
+export type SubscriptionPlan = 'free' | 'retail_india' | 'international' | 'enterprise';
+
 export interface AuthResponse {
   success: boolean;
   message: string;
@@ -10,7 +13,7 @@ export interface AuthResponse {
     fullName: string;
     email: string;
     isEmailVerified?: boolean;
-    subscriptionStatus?: string;
+    subscriptionStatus?: SubscriptionPlan;
     usageCredits?: number;
     usageHistory?: Array<{ feature: string; usedAt: Date }>;
   };
