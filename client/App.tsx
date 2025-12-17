@@ -207,6 +207,14 @@ const App: React.FC = () => {
 
   const handleAiAnalysis = async () => {
     if (!weather) return;
+    
+    // Check if user has subscription for AI analysis
+    if (user && user.subscriptionStatus === 'free') {
+      setViewMode('dashboard');
+      setIsLocked(true);
+      return;
+    }
+    
     if (!checkAndIncrementUsage()) return;
     
     setAnalyzing(true);
@@ -270,14 +278,14 @@ const App: React.FC = () => {
         return;
     }
     
-    // Check if email is verified for protected features
-    if ((mode === 'intelligence' || mode === 'insights') && user && !user.isEmailVerified) {
+    // Check if email is verified for forecast feature
+    if (mode === 'intelligence' && user && !user.isEmailVerified) {
       alert('⚠️ Please verify your email to access this feature. Check your inbox for the verification link.');
       return;
     }
     
     // Check if subscription is required for paid features
-    if ((mode === 'chat' || mode === 'report') && user && user.subscriptionStatus === 'free') {
+    if ((mode === 'chat' || mode === 'report' || mode === 'insights') && user && user.subscriptionStatus === 'free') {
       // Redirect to subscription page
       setViewMode('dashboard');
       setIsLocked(true);
@@ -345,7 +353,7 @@ const App: React.FC = () => {
             >
                 <Sparkles className="w-5 h-5" />
                 <span className="font-medium flex-1 text-left">Insights</span>
-                {!isAuthenticated && <Lock className="w-4 h-4 text-slate-600" />}
+                {(!isAuthenticated || (user && user.subscriptionStatus === 'free')) && <Lock className="w-4 h-4 text-slate-600" />}
             </button>
 
             <button 
@@ -358,7 +366,7 @@ const App: React.FC = () => {
             >
                 <FlaskConical className="w-5 h-5" />
                 <span className="font-medium flex-1 text-left">Research Lab</span>
-                {!isAuthenticated && <Lock className="w-4 h-4 text-slate-600" />}
+                {(!isAuthenticated || (user && user.subscriptionStatus === 'free')) && <Lock className="w-4 h-4 text-slate-600" />}
             </button>
 
             <button 
@@ -371,7 +379,7 @@ const App: React.FC = () => {
             >
                 <MessageSquare className="w-5 h-5" />
                 <span className="font-medium flex-1 text-left">Captain on Deck</span>
-                {!isAuthenticated && <Lock className="w-4 h-4 text-slate-600" />}
+                {(!isAuthenticated || (user && user.subscriptionStatus === 'free')) && <Lock className="w-4 h-4 text-slate-600" />}
             </button>
         </nav>
         
@@ -439,21 +447,21 @@ const App: React.FC = () => {
                     className={`w-full text-left px-4 py-3 rounded-lg flex items-center justify-between ${viewMode === 'insights' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
                 >
                     <span>Insights</span>
-                    {!isAuthenticated && <Lock className="w-4 h-4" />}
+                    {(!isAuthenticated || (user && user.subscriptionStatus === 'free')) && <Lock className="w-4 h-4" />}
                 </button>
                  <button 
                     onClick={() => handleAuthNavigation('report')}
                     className={`w-full text-left px-4 py-3 rounded-lg flex items-center justify-between ${viewMode === 'report' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
                 >
                     <span>Research Lab</span>
-                    {!isAuthenticated && <Lock className="w-4 h-4" />}
+                    {(!isAuthenticated || (user && user.subscriptionStatus === 'free')) && <Lock className="w-4 h-4" />}
                 </button>
                 <button 
                     onClick={() => handleAuthNavigation('chat')}
                     className={`w-full text-left px-4 py-3 rounded-lg flex items-center justify-between ${viewMode === 'chat' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
                 >
                     <span>Captain on Deck</span>
-                    {!isAuthenticated && <Lock className="w-4 h-4" />}
+                    {(!isAuthenticated || (user && user.subscriptionStatus === 'free')) && <Lock className="w-4 h-4" />}
                 </button>
                 
                 {/* Mobile Auth Button */}
@@ -668,6 +676,11 @@ const App: React.FC = () => {
                                     <>
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                         Analysing...
+                                    </>
+                                    ) : user && user.subscriptionStatus === 'free' ? (
+                                    <>
+                                        <Lock className="w-4 h-4" />
+                                        Pro Feature
                                     </>
                                     ) : (
                                     <>
