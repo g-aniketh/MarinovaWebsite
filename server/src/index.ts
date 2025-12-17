@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 import usageRoutes from './routes/usage';
+import aiRoutes from './routes/ai';
 
 const app: Application = express();
 const PORT: number = parseInt(process.env.PORT || '5000', 10);
@@ -26,6 +27,7 @@ mongoose
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/usage', usageRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response): void => {
