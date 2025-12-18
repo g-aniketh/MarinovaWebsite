@@ -92,16 +92,90 @@ router.post('/generate-report', auth, async (req: Request, res: Response): Promi
  * POST /api/ai/generate-insights
  * Generate monthly ocean insights
  */
-router.post('/generate-insights', auth, async (_req: Request, res: Response): Promise<void> => {
+router.post('/generate-insights', auth, async (req: Request, res: Response): Promise<void> => {
   try {
-    const insights = await aiService.generateMonthlyInsights();
+    const User = (await import('../models/User')).default;
+    const user = await User.findById(req.userId);
 
-    res.json({ success: true, insights });
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    // Check if user has credits (DON'T deduct yet)
+    const featureName = 'insights';
+    let hasCredits = false;
+
+    if (user.subscriptionStatus === 'free') {
+      hasCredits = user.usageCredits > 0;
+    } else {
+      const credit = user.monthlyCredits[featureName];
+      hasCredits = credit === -1 || credit > 0; // Unlimited or has credits
+    }
+
+    if (!hasCredits) {
+      res.status(403).json({
+        success: false,
+        message: 'You have run out of credits. Please upgrade your plan.',
+        requiresSubscription: true
+      });
+      return;
+    }
+
+    // Try to generate insights
+    let insights;
+    try {
+      insights = await aiService.generateMonthlyInsights();
+    } catch (aiError: any) {
+      // AI service failed - DON'T charge the user
+      console.error('AI service error:', aiError);
+      
+      // Check if it's an API limit/quota error
+      const errorMessage = aiError.message || '';
+      if (errorMessage.includes('quota') || errorMessage.includes('limit') || errorMessage.includes('rate')) {
+        res.status(503).json({
+          success: false,
+          message: 'Our AI service is currently at capacity. Please try again in a few minutes. Your credits have NOT been deducted.',
+          serviceUnavailable: true
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Unable to generate insights at this time. Please try again later. Your credits have NOT been deducted.',
+          serviceUnavailable: true
+        });
+      }
+      return;
+    }
+
+    // SUCCESS! Now deduct the credit
+    if (user.subscriptionStatus === 'free') {
+      user.usageCredits -= 1;
+    } else {
+      const credit = user.monthlyCredits[featureName];
+      if (credit !== -1) {
+        user.monthlyCredits[featureName] -= 1;
+      }
+    }
+
+    // Track usage
+    user.usageHistory.push({
+      feature: featureName,
+      usedAt: new Date()
+    });
+
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      insights,
+      creditsRemaining: user.subscriptionStatus === 'free' ? user.usageCredits : user.monthlyCredits[featureName]
+    });
   } catch (error: any) {
     console.error('Insights generation error:', error);
     res.status(500).json({ 
       success: false, 
-      message: error.message || 'Failed to generate insights' 
+      message: 'An unexpected error occurred. Your credits have NOT been deducted.'
     });
   }
 });
