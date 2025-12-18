@@ -12,7 +12,16 @@ const app: Application = express();
 const PORT: number = parseInt(process.env.PORT || '5000', 10);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://www.marinova.in',
+    'https://marinova.in'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // MongoDB Connection
@@ -47,7 +56,12 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction): void =>
   });
 });
 
-// Start server
-app.listen(PORT, (): void => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-});
+// Start server (only for local development)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, (): void => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+  });
+}
+
+// Export for Vercel serverless
+export default app;
