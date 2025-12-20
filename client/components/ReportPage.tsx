@@ -29,7 +29,7 @@ const ReportPage: React.FC = () => {
     setIsLoading(true);
     setReport(null);
     try {
-      const data = await generateResearchReport(topic, trackUsage);
+      const data = await generateResearchReport(topic);
       if (data) {
         setReport(data);
       }

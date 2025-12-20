@@ -10,8 +10,7 @@ const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:5000'
 export const sendMessageToGemini = async (
   history: ChatMessage[], 
   currentMessage: string, 
-  attachments: ChatAttachment[],
-  trackUsage: (feature: string) => Promise<{ success: boolean; message: string; requiresSubscription?: boolean }>
+  attachments: ChatAttachment[]
 ): Promise<ChatMessage> => {
   try {
     const token = authService.getToken();
@@ -20,18 +19,7 @@ export const sendMessageToGemini = async (
       throw new Error('Authentication required');
     }
 
-    // Track usage BEFORE making AI call
-    const trackResult = await trackUsage('chat');
-    if (!trackResult.success) {
-      // Return error message if tracking failed
-      return {
-        id: Date.now().toString(),
-        role: 'model',
-        text: trackResult.message || 'Unable to process request. Please check your subscription.',
-        timestamp: Date.now()
-      };
-    }
-
+    // Backend handles credit checking and deduction
     // Convert attachments to base64 URLs for sending to backend
     const imageUrls: string[] = [];
     for (const att of attachments) {

@@ -134,7 +134,7 @@ const ChatPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await sendMessageToGemini(messages, inputText, userMsg.attachments || [], trackUsage);
+      const response = await sendMessageToGemini(messages, inputText, userMsg.attachments || []);
       setMessages(prev => [...prev, response]);
     } catch (error) {
       console.error(error);

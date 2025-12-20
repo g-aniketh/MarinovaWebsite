@@ -4,8 +4,7 @@ import { authService } from './authService';
 const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:5000';
 
 export const generateResearchReport = async (
-  topic: string,
-  trackUsage: (feature: string) => Promise<{ success: boolean; message: string; requiresSubscription?: boolean }>
+  topic: string
 ): Promise<ResearchReport | null> => {
   try {
     const token = authService.getToken();
@@ -14,12 +13,7 @@ export const generateResearchReport = async (
       throw new Error('Authentication required');
     }
 
-    // Track usage BEFORE making AI call
-    const trackResult = await trackUsage('report');
-    if (!trackResult.success) {
-      console.error('Usage tracking failed:', trackResult.message);
-      return null;
-    }
+    // Backend handles credit checking and deduction
 
     const response = await fetch(`${API_URL}/api/ai/generate-report`, {
       method: 'POST',

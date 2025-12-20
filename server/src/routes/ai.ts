@@ -51,14 +51,53 @@ router.post('/chat', auth, async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const response = await aiService.generateChatResponse(messages, imageUrls);
+    // Check credits before AI call
+    const User = (await import('../models/User')).default;
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    const featureName = 'chat';
+    const hasCredits = user.subscriptionStatus === 'free' 
+      ? user.usageCredits > 0 
+      : (user.monthlyCredits[featureName] === -1 || user.monthlyCredits[featureName] > 0);
+
+    if (!hasCredits) {
+      res.status(403).json({ success: false, message: 'No credits remaining', requiresSubscription: true });
+      return;
+    }
+
+    // Try AI generation
+    let response;
+    try {
+      response = await aiService.generateChatResponse(messages, imageUrls);
+    } catch (aiError: any) {
+      console.error('AI service error:', aiError);
+      res.status(503).json({ 
+        success: false, 
+        message: 'AI service temporarily unavailable. Your credits have NOT been deducted.',
+        serviceUnavailable: true
+      });
+      return;
+    }
+
+    // Deduct credit on success
+    if (user.subscriptionStatus === 'free') {
+      user.usageCredits -= 1;
+    } else if (user.monthlyCredits[featureName] !== -1) {
+      user.monthlyCredits[featureName] -= 1;
+    }
+    user.usageHistory.push({ feature: featureName, usedAt: new Date() });
+    await user.save();
 
     res.json({ success: true, response });
   } catch (error: any) {
     console.error('Chat error:', error);
     res.status(500).json({ 
       success: false, 
-      message: error.message || 'Failed to generate chat response' 
+      message: 'An error occurred. Your credits have NOT been deducted.'
     });
   }
 });
@@ -76,14 +115,53 @@ router.post('/generate-report', auth, async (req: Request, res: Response): Promi
       return;
     }
 
-    const report = await aiService.generateResearchReport(topic);
+    // Check credits before AI call
+    const User = (await import('../models/User')).default;
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    const featureName = 'researchLab';
+    const hasCredits = user.subscriptionStatus === 'free' 
+      ? user.usageCredits > 0 
+      : (user.monthlyCredits[featureName] === -1 || user.monthlyCredits[featureName] > 0);
+
+    if (!hasCredits) {
+      res.status(403).json({ success: false, message: 'No credits remaining', requiresSubscription: true });
+      return;
+    }
+
+    // Try AI generation
+    let report;
+    try {
+      report = await aiService.generateResearchReport(topic);
+    } catch (aiError: any) {
+      console.error('AI service error:', aiError);
+      res.status(503).json({ 
+        success: false, 
+        message: 'AI service temporarily unavailable. Your credits have NOT been deducted.',
+        serviceUnavailable: true
+      });
+      return;
+    }
+
+    // Deduct credit on success
+    if (user.subscriptionStatus === 'free') {
+      user.usageCredits -= 1;
+    } else if (user.monthlyCredits[featureName] !== -1) {
+      user.monthlyCredits[featureName] -= 1;
+    }
+    user.usageHistory.push({ feature: featureName, usedAt: new Date() });
+    await user.save();
 
     res.json({ success: true, report });
   } catch (error: any) {
     console.error('Research report error:', error);
     res.status(500).json({ 
       success: false, 
-      message: error.message || 'Failed to generate research report' 
+      message: 'An error occurred. Your credits have NOT been deducted.'
     });
   }
 });

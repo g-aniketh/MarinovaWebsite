@@ -14,7 +14,7 @@ const openai = new OpenAI({
 // AI Configuration
 const AI_CONFIG = {
   weather: {
-    model: "google/gemini-flash-1.5-8b",
+    model: "openai/gpt-4o-mini",
     maxTokens: 500,
     temperature: 0.7
   },
@@ -29,8 +29,8 @@ const AI_CONFIG = {
     temperature: 0.7
   },
   insights: {
-    model: "google/gemini-flash-1.5-8b",
-    maxTokens: 300,
+    model: "openai/gpt-4o-mini",
+    maxTokens: 3000,
     temperature: 0.9
   },
   images: {
@@ -195,31 +195,38 @@ export const generateMonthlyInsights = async (): Promise<Array<{
   tags: string[];
 }>> => {
   try {
-    const prompt = `Generate 30 days of oceanographic insights, predictions, and anomalies for a global ocean monitoring platform.
+    const prompt = `Generate 15 diverse oceanographic insights, predictions, and anomalies for a global ocean monitoring platform for the next 2 weeks.
 
-For each day, provide ONE insight in this EXACT JSON format:
+Requirements:
+- Return ONLY a valid JSON array, no markdown formatting
+- Each insight must follow this exact structure:
 {
-  "date": "2024-XX-XX",
-  "title": "Brief title",
-  "type": "Prediction|Observation|Anomaly|Event",
-  "region": "Ocean region",
-  "description": "150-word detailed description",
-  "confidence": 60-95,
-  "severity": "Low|Medium|Critical|Positive",
+  "date": "YYYY-MM-DD" (use dates from today onwards),
+  "title": "Concise title (max 60 chars)",
+  "type": "Prediction" or "Observation" or "Anomaly" or "Event",
+  "region": "Specific ocean region",
+  "description": "Detailed description (100-150 words)",
+  "confidence": 70-95 (number only, for Predictions),
+  "severity": "Low" or "Medium" or "Critical" or "Positive",
   "tags": ["tag1", "tag2", "tag3"]
 }
 
-Cover diverse topics: coral bleaching, currents, temperatures, marine life, pollution, climate patterns.
-Return ONLY a JSON array of 30 insights, nothing else.`;
+Topics to cover: coral bleaching, ocean currents, temperature anomalies, marine life migrations, pollution events, extreme weather impacts, pH changes, biodiversity.
+
+Return exactly 15 insights as a JSON array. Start immediately with [ and end with ].`;
 
     const response = await openai.chat.completions.create({
       model: AI_CONFIG.insights.model,
       messages: [{ role: "user", content: prompt }],
-      max_tokens: AI_CONFIG.insights.maxTokens * 10, // Need more tokens for 30 insights
+      max_tokens: 8000, // Enough for 15 detailed insights
       temperature: AI_CONFIG.insights.temperature,
     });
 
-    const content = response.choices[0]?.message?.content || "[]";
+    let content = response.choices[0]?.message?.content || "[]";
+    
+    // Strip markdown code blocks if present
+    content = content.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+    
     const insights = JSON.parse(content);
     
     // Add IDs
