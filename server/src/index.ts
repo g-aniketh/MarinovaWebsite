@@ -16,8 +16,10 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'https://www.marinova.in/',
+    'https://www.marinova.in',
     'https://marinova.in',
-    'https://marinova-frontend.vercel.app/'
+    'https://marinova-frontend.vercel.app/',
+    'https://marinova-frontend.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -25,35 +27,67 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Request logging middleware for debugging
+app.use((req: Request, _res: Response, next: NextFunction): void => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
+  next();
+});
+
 // MongoDB Connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch((err: Error) => {
-    console.error('❌ MongoDB connection error:', err);
+// In serverless environments, handle connection gracefully
+if (!process.env.MONGODB_URI) {
+  console.error('❌ MONGODB_URI environment variable is not set!');
+  if (process.env.NODE_ENV !== 'production') {
     process.exit(1);
-  });
+  }
+} else {
+  mongoose
+    .connect(process.env.MONGODB_URI)
+    .then(() => console.log('✅ MongoDB connected successfully'))
+    .catch((err: Error) => {
+      console.error('❌ MongoDB connection error:', err);
+      // Don't exit in production/serverless - let Vercel handle it
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️  Continuing without MongoDB connection (serverless mode)');
+      } else {
+        process.exit(1);
+      }
+    });
+}
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/usage', usageRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Health check endpoint
+// Health check endpoint (doesn't require MongoDB)
 app.get('/api/health', (_req: Request, res: Response): void => {
+  const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
   res.json({
     success: true,
     message: 'Server is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    mongoStatus,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction): void => {
-  console.error(err.stack);
+  console.error('Error:', err.message);
+  console.error('Stack:', err.stack);
   res.status(500).json({
     success: false,
-    message: 'Something went wrong!'
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// 404 handler
+app.use((_req: Request, res: Response): void => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
   });
 });
 
