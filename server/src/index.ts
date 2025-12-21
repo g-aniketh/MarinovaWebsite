@@ -15,8 +15,9 @@ const PORT: number = parseInt(process.env.PORT || '5000', 10);
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://www.marinova.in',
-    'https://marinova.in'
+    'https://www.marinova.in/',
+    'https://marinova.in',
+    'https://marinova-frontend.vercel.app/'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -57,10 +58,14 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction): void =>
 });
 
 // Start server (only for local development)
+// In production, Vercel will handle the serverless function
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, (): void => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+  app.listen(PORT, '0.0.0.0', (): void => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+    console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
   });
+} else {
+  console.log('⚠️  Running in production mode - server will be handled by Vercel');
 }
 
 // Export for Vercel serverless

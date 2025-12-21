@@ -81,6 +81,22 @@ export const authService = {
         body: JSON.stringify(credentials),
       });
 
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        // Try to parse error message, but handle if it's not JSON
+        let errorMessage = 'Registration failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        return {
+          success: false,
+          message: errorMessage,
+        };
+      }
+
       const data = await response.json();
 
       if (data.success && data.token) {
@@ -88,11 +104,18 @@ export const authService = {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Register error:', error);
+      // Provide more specific error messages
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        return {
+          success: false,
+          message: `Cannot connect to server. Please ensure the backend is running at ${API_URL}`,
+        };
+      }
       return {
         success: false,
-        message: 'Network error. Please check your connection.',
+        message: error.message || 'Network error. Please check your connection.',
       };
     }
   },
@@ -108,6 +131,22 @@ export const authService = {
         body: JSON.stringify(credentials),
       });
 
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        // Try to parse error message, but handle if it's not JSON
+        let errorMessage = 'Login failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        return {
+          success: false,
+          message: errorMessage,
+        };
+      }
+
       const data = await response.json();
 
       if (data.success && data.token) {
@@ -115,11 +154,18 @@ export const authService = {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      // Provide more specific error messages
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        return {
+          success: false,
+          message: `Cannot connect to server. Please ensure the backend is running at ${API_URL}`,
+        };
+      }
       return {
         success: false,
-        message: 'Network error. Please check your connection.',
+        message: error.message || 'Network error. Please check your connection.',
       };
     }
   },
@@ -144,6 +190,23 @@ export const authService = {
         },
       });
 
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        // Token might be invalid
+        this.removeToken();
+        let errorMessage = 'Authentication failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        return {
+          success: false,
+          message: errorMessage,
+        };
+      }
+
       const data = await response.json();
 
       if (!data.success) {
@@ -152,11 +215,17 @@ export const authService = {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get user error:', error);
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        return {
+          success: false,
+          message: `Cannot connect to server. Please ensure the backend is running at ${API_URL}`,
+        };
+      }
       return {
         success: false,
-        message: 'Network error. Please check your connection.',
+        message: error.message || 'Network error. Please check your connection.',
       };
     }
   },
